@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 float minf(float a, float b) {
 	return a < b ? a : b;
@@ -138,7 +139,7 @@ str str_remove_suffix(str src, str suffix);
 		iter = str_pop_first_split(&macro_var(src_), split_by),			\
 		macro_var(split_by_) = split_by;					\
 											\
-		str_valid(iter);						\
+		str_valid(iter);							\
 											\
 		iter = str_pop_first_split(&macro_var(src_), macro_var(split_by_))	\
 		)
@@ -158,12 +159,6 @@ str str_pop_first_split(str* src, str split_by) {
 	return s;
 }
 
-#define str_pop_first_split_(src, split_by)				\
-	_Generic(split_by,						\
-	const char*: str_pop_first_split_impl(src, cstr(split_by)),	\
-	char *: str_pop_first_split_impl(src, cstr(split_by)),		\
-	default: str_pop_first_split_impl(src, split_by))
-
 void print(str s) {
 	if (!str_valid(s)) {
 		return;
@@ -171,6 +166,47 @@ void print(str s) {
 	for (int i = 0; i < s.size; i++) {
 		putchar(s.data[i]);
 	}
+}
+
+void print_(str s, ...) {
+	if (!str_valid(s)) {
+		return;
+	}
+	va_list args;
+	va_start(args, s);
+	int depth = 0;
+	for (int i = 0; i < s.size; i++) {
+		char c = s.data[i];
+		if (c == '}') {
+			if (depth > 0) {
+				depth--;
+				if (depth == 0) {
+					str a = va_arg(args, str);
+					print(a);
+					continue;
+				}
+			}
+		} else if (c == '{') {
+			if (!depth) {
+				depth++;
+				continue;
+			}
+//			putchar('{');
+		} else if (depth > 0) {
+			putchar('{');
+			depth--;
+		}
+		putchar(c);
+	}
+	va_end(args);
+	for (;depth;depth--) {
+		putchar('{');
+	}
+}
+
+void println_(str s, ...) {
+	print_(s);
+	putchar('\n');
 }
 
 void println(str s) {
@@ -219,6 +255,10 @@ int main() {
 #endif
 	str hour = str_pop_first_split(&date, cstr("/"));
 	printf("hour=");println(hour);
+
+//	println_(cstr("Hello world! {} "), cstr("1"), 2, 3);
+	str s = cstr("12");
+	println_(cstr("Hello world! {} "), s, 2, 3);
 
 	return 0;
 }
