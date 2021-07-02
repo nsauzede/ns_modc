@@ -26,17 +26,6 @@ void dummy(void){}
 	(macro_var(_i_) += 1), end		\
 	)
 
-#define for_str_split(iter, src, split_by)						\
-	for (										\
-		str macro_var(src_) = src,						\
-		iter = str_pop_first_split(&macro_var(src_), split_by),			\
-		macro_var(split_by_) = split_by;					\
-											\
-		str_valid(macro_var(src_));						\
-											\
-		iter = str_pop_first_split(&macro_var(src_), macro_var(split_by_))	\
-		)
-
 #define scope(end) defer(dummy(),end)
 
 void begin() {
@@ -91,7 +80,7 @@ struct allocator;
 typedef void *(*allocator_cb)(struct allocator *this_allocator, int amount_to_alloc, void *ptr_to_free);
 typedef struct allocator {
 	void *user_data;
-	void *(*proc)(struct allocator *this_allocator, int amount_to_alloc, void *ptr_to_free);
+	allocator_cb proc;
 } allocator_t;
 
 typedef struct str {
@@ -120,25 +109,52 @@ str cstr(char *cs) {
 }
 
 bool str_valid(str s) {
-	return !(s.data != 0);
+	return (s.data != 0);
 }
 bool str_match(str a, str b);
 bool str_contains(str haystack, str needle);
 str str_sub(str src, int begin, int end);
-str str_find_first(str haystack, str needle);
+str str_find_first(str haystack, str needle) {
+	str result = {0};
+	if (!str_valid(haystack) || !str_valid(needle) || needle.size > haystack.size) {
+		return result;
+	}
+	for (int i = 0; i <= haystack.size - needle.size; i++) {
+		if (!memcmp(haystack.data + i, needle.data, needle.size)) {
+			result.data = haystack.data + i;
+			result.size = needle.size;
+			break;
+		}
+	}
+	return result;
+}
 str str_find_last(str haystack, str needle);
 str str_remove_prefix(str src, str prefix);
 str str_remove_suffix(str src, str suffix);
 
-typedef struct cat{} cat;
-void print_cat(cat *);
-//logger_register_printer("cat", print_cat);
-//cat c = ;
-//log("Cat: {cat}", c);
+#define for_str_split(iter, src, split_by)						\
+	for (										\
+		str macro_var(src_) = src,						\
+		iter = str_pop_first_split(&macro_var(src_), split_by),			\
+		macro_var(split_by_) = split_by;					\
+											\
+		str_valid(iter);						\
+											\
+		iter = str_pop_first_split(&macro_var(src_), macro_var(split_by_))	\
+		)
 
 str str_pop_first_split(str* src, str split_by) {
-	str s = cstr("");
-	
+	str s = *src;
+	str n = str_find_first(*src, split_by);
+	if (str_valid(n)) {
+		s.data = src->data;
+		s.size = n.data - s.data;
+		src->data += s.size + 1;
+		src->size -= s.size + 1;
+	} else {
+		src->data = 0;
+		src->size = 0;
+	}
 	return s;
 }
 
@@ -148,9 +164,22 @@ str str_pop_first_split(str* src, str split_by) {
 	char *: str_pop_first_split_impl(src, cstr(split_by)),		\
 	default: str_pop_first_split_impl(src, split_by))
 
-void println(str s) {
-	printf("%s\n", s.data);
+void print(str s) {
+	if (!str_valid(s)) {
+		return;
+	}
+	for (int i = 0; i < s.size; i++) {
+		putchar(s.data[i]);
+	}
 }
+
+void println(str s) {
+	print(s);
+	putchar('\n');
+}
+
+typedef struct cat{} cat;
+void print_cat(cat *);
 
 int main() {
 //	logger_register_printer("cat", print_cat);
@@ -174,12 +203,22 @@ int main() {
 		printf("Succesfully loaded image\n");
 	}
 	str date = cstr("2021/07/02");
+	printf("date=");println(date);
+	print(cstr("find_first="));
+	println(str_find_first(date, cstr("7/02")));
 	for_str_split(it, date, cstr("/")) {
 		println(it);
 	}
+#if 1
 	str year = str_pop_first_split(&date, cstr("/"));
-	printf("year=");
-	println(year);
+	str month = str_pop_first_split(&date, cstr("/"));
+	str day = str_pop_first_split(&date, cstr("/"));
+	printf("year=");println(year);
+	printf("month=");println(month);
+	printf("day=");println(day);
+#endif
+	str hour = str_pop_first_split(&date, cstr("/"));
+	printf("hour=");println(hour);
 
 	return 0;
 }
