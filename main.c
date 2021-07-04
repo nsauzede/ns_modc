@@ -85,6 +85,10 @@ typedef struct allocator {
 	allocator_cb proc;
 } allocator_t;
 
+void *default_allocator_cb() {
+	return 0;
+}
+
 typedef struct str {
 	char *data;
 	int size;
@@ -97,11 +101,26 @@ typedef struct str_buf {
 	allocator_cb allocator;
 } str_buf;
 
-str_buf str_buf_make(int size, allocator_cb allocator);
-void str_buf_append(str_buf *, str);
+//str_buf str_buf_make(int size, allocator alloc) {
+str_buf str_buf_make(int size) {
+	return (str_buf){calloc(1, size), 0, size};
+}
+void str_buf_delete(str_buf sb) {
+	if (sb.data) {
+		free(sb.data);
+	}
+}
+void str_buf_append(str_buf *sb, str s) {
+	if (sb->capacity >= sb->size + s.size) {
+		memcpy(sb->data + sb->size, s.data, s.size);
+		sb->size += s.size;
+	}
+}
 void str_buf_insert(str_buf *, str, int);
 void str_buf_remove(str_buf *, int, int);
-str str_buf_str(str_buf);
+str str_buf_str(str_buf sb) {
+	return (str){sb.data, sb.size};
+}
 
 str cstr(char *cs) {
 	str s = {0};
@@ -268,10 +287,6 @@ typedef struct cat{} cat;
 void print_cat(cat *);
 
 int main() {
-//	logger_register_printer("cat", print_cat);
-//	cat c = ;
-//	log("Cat: {cat}", c);
-
 	defer(begin(), end()) {
 		printf("Hello world!\n");
 	}
@@ -306,8 +321,17 @@ int main() {
 
 	str s = cstr("{OPT}");
 	println_(cstr("Hello world! {{ }} {} %d"), s, 42);
-	println_(cstr("Hello world! {{ }} {:} %d"), s, 42);
+	println_(cstr("Hello world! {{}} {:} %d"), s, 42);
 	println_(cstr("Hello world! {{ }} {:?} %d"), s, 42);
+
+//	str_buf sb = str_buf_make(16, default_allocator_cb);
+	str_buf sb = str_buf_make(16);
+	str_buf_append(&sb, cstr("str"));
+	str_buf_append(&sb, cstr("buf"));
+	printf("str_buf=[");
+	print(str_buf_str(sb));
+	printf("]\n");
+	str_buf_delete(sb);
 
 	return 0;
 }
