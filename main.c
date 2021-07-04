@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -168,46 +169,80 @@ void print(str s) {
 	}
 }
 
+void panic(const char *msg) {
+	printf("%s\n", msg);
+	exit(1);
+}
+
 void print_(str s, ...) {
 	if (!str_valid(s)) {
 		return;
 	}
 	va_list args;
 	va_start(args, s);
-	int depth = 0;
+	int obrace = 0;
+	int cbrace = 0;
+	int opt = 0;
+	int debug = 0;
 	for (int i = 0; i < s.size; i++) {
 		char c = s.data[i];
-		if (c == '}') {
-			if (depth > 0) {
-				depth--;
-				if (depth == 0) {
-					str a = va_arg(args, str);
-					print(a);
+		if (c == '{') {
+			if (obrace) {
+				obrace = 0;
+			} else {
+				obrace = 1;
+				continue;
+			}
+		} else if (c == '}') {
+			if (obrace) {
+				if (opt) {
+					if (debug) {
+						putchar('"');
+						str a = va_arg(args, str);
+						print(a);
+						putchar('"');
+					} else {
+						printf("{OPT}");
+					}
+				} else {
+					printf("{NRM}");
+				}
+//					str a = va_arg(args, str);
+//					print(a);
+				obrace = 0;
+				continue;
+			} else {
+				if (cbrace) {
+					cbrace = 0;
+				} else {
+					cbrace = 1;
 					continue;
 				}
 			}
-		} else if (c == '{') {
-			if (!depth) {
-				depth++;
-				continue;
+		}
+		if (obrace) {
+			if (c == ':') {
+				if (opt) {
+					panic("invalid fmt: expected `}`");
+				}
+				opt = 1;
+			} else if (c == '?') {
+				if (!opt) {
+					panic("invalid fmt: expected `}`");
+				}
+				debug = 1;
 			}
-//			putchar('{');
-		} else if (depth > 0) {
-			putchar('{');
-			depth--;
+			else {
+				panic("invalid fmt: expected `}`");
+			}
+			continue;
 		}
 		putchar(c);
 	}
 	va_end(args);
-	for (;depth;depth--) {
-		putchar('{');
-	}
 }
 
-void println_(str s, ...) {
-	print_(s);
-	putchar('\n');
-}
+#define println_(s, ...) {print_(s, __VA_ARGS__);putchar('\n');}while(0)
 
 void println(str s) {
 	print(s);
@@ -245,20 +280,19 @@ int main() {
 	for_str_split(it, date, cstr("/")) {
 		println(it);
 	}
-#if 1
 	str year = str_pop_first_split(&date, cstr("/"));
 	str month = str_pop_first_split(&date, cstr("/"));
 	str day = str_pop_first_split(&date, cstr("/"));
 	printf("year=");println(year);
 	printf("month=");println(month);
 	printf("day=");println(day);
-#endif
 	str hour = str_pop_first_split(&date, cstr("/"));
 	printf("hour=");println(hour);
 
-//	println_(cstr("Hello world! {} "), cstr("1"), 2, 3);
-	str s = cstr("12");
-	println_(cstr("Hello world! {} "), s, 2, 3);
+	str s = cstr("{OPT}");
+	println_(cstr("Hello world! {{ }} {}"), s);
+	println_(cstr("Hello world! {{ }} {:}"), s);
+	println_(cstr("Hello world! {{ }} {:?}"), s);
 
 	return 0;
 }
