@@ -170,7 +170,7 @@ void print(str s) {
 }
 
 void panic(const char *msg) {
-	printf("%s\n", msg);
+	printf("\n%s\n", msg);
 	exit(1);
 }
 
@@ -180,13 +180,21 @@ void print_(str s, ...) {
 	}
 	va_list args;
 	va_start(args, s);
+	int perc = 0;
 	int obrace = 0;
 	int cbrace = 0;
 	int opt = 0;
 	int debug = 0;
 	for (int i = 0; i < s.size; i++) {
 		char c = s.data[i];
-		if (c == '{') {
+		if (c == '%') {
+			if (perc) {
+				perc = 0;
+			} else {
+				perc = 1;
+				continue;
+			}
+		} else if (c == '{') {
 			if (obrace) {
 				obrace = 0;
 			} else {
@@ -195,20 +203,18 @@ void print_(str s, ...) {
 			}
 		} else if (c == '}') {
 			if (obrace) {
+				str a = va_arg(args, str);
 				if (opt) {
 					if (debug) {
 						putchar('"');
-						str a = va_arg(args, str);
 						print(a);
 						putchar('"');
 					} else {
-						printf("{OPT}");
+						print(a);
 					}
 				} else {
-					printf("{NRM}");
+					print(a);
 				}
-//					str a = va_arg(args, str);
-//					print(a);
 				obrace = 0;
 				continue;
 			} else {
@@ -219,6 +225,16 @@ void print_(str s, ...) {
 					continue;
 				}
 			}
+		}
+		if (perc) {
+			perc = 0;
+			if (c == 'd') {
+				int d = va_arg(args, int);
+				printf("%d", d);
+			} else {
+				panic("invalid cfmt");
+			}
+			continue;
 		}
 		if (obrace) {
 			if (c == ':') {
@@ -231,8 +247,7 @@ void print_(str s, ...) {
 					panic("invalid fmt: expected `}`");
 				}
 				debug = 1;
-			}
-			else {
+			} else {
 				panic("invalid fmt: expected `}`");
 			}
 			continue;
@@ -290,9 +305,9 @@ int main() {
 	printf("hour=");println(hour);
 
 	str s = cstr("{OPT}");
-	println_(cstr("Hello world! {{ }} {}"), s);
-	println_(cstr("Hello world! {{ }} {:}"), s);
-	println_(cstr("Hello world! {{ }} {:?}"), s);
+	println_(cstr("Hello world! {{ }} {} %d"), s, 42);
+	println_(cstr("Hello world! {{ }} {:} %d"), s, 42);
+	println_(cstr("Hello world! {{ }} {:?} %d"), s, 42);
 
 	return 0;
 }
