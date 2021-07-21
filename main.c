@@ -276,7 +276,7 @@ void print_(str s, ...) {
 	va_end(args);
 }
 
-#define println_(s, ...) {print_(s, __VA_ARGS__);putchar('\n');}while(0)
+#define println_(s, ...) do{print_(s, __VA_ARGS__);putchar('\n');}while(0)
 
 void println(str s) {
 	print(s);
