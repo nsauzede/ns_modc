@@ -2,4 +2,4 @@
 Modern C experiments
 
 # Credits
-https://youtu.be/QpAhX-gsHMs
+Largely inspired by https://youtu.be/QpAhX-gsHMs
