@@ -1,0 +1,21 @@
+name: vade
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt install --quiet -y make gcc python3 bash
+          git clone https://github.com/nsauzede/ns_vade.git
+      - name: Build and test
+        run: ns_vade/bin/vade clean test
