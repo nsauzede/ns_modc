@@ -1,4 +1,6 @@
 # mymodc
+[![Build Status][WorkflowBadge]][WorkflowUrl]
+
 Modern C experiments
 
 # How to test
@@ -9,7 +11,7 @@ To build, first install vade :
 
 ## Run build/test
 ```
-~/perso/git/mymodc$ vade clean test
+$ vade clean test
     RM  vade/pkg
     RM  vade/bin
     CC  modc.o
@@ -36,3 +38,6 @@ To build, first install vade :
 
 # Credits
 Initial ideas sparked from [Modern C and What We Can Learn From It](https://youtu.be/QpAhX-gsHMs) by Luca Sas.
+
+[WorkflowBadge]: https://github.com/nsauzede/ns_modc/workflows/vade/badge.svg
+[WorkflowUrl]: https://github.com/nsauzede/ns_modc/commits/main
