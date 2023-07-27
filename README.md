@@ -12,8 +12,7 @@ To build, first install vade :
 ## Run build/test
 ```
 $ vade clean test
-    RM  vade/pkg
-    RM  vade/bin
+    RM  vade/target
     CC  modc.o
     AR  modc.a
     AR  libmodc.a

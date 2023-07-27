@@ -289,6 +289,7 @@ void print_cat(cat *);
 int modc_proto() {
 	defer(begin(), end()) {
 		printf("Hello world!\n");
+		printf("Answer is %d\n", 42);
 	}
 	int answer = 42;
 	scope(closure(answer)) {
