@@ -180,11 +180,8 @@ str str_pop_first_split(str* src, str split_by) {
 }
 
 void print(str s) {
-	if (!str_valid(s)) {
-		return;
-	}
-	for (int i = 0; i < s.size; i++) {
-		putchar(s.data[i]);
+	if (str_valid(s)) {
+		printf("%.*s", s.size, s.data);
 	}
 }
 
